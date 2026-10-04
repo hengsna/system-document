@@ -1,0 +1,7 @@
+node_modules/
+.env
+.DS_Store
+survey-builder/node_modules/
+survey-builder/.next/
+m_e_backend/vendor/
+m_e_backend/.env

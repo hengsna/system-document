@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M&E System Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Hide scrollbar for sidebar */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Smooth transitions */
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 overflow-hidden">
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col justify-center items-center">
+        <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-600/30">
+                    <i class="fa-solid fa-chart-pie text-white text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">M&E System</h2>
+                <p class="text-slate-500 mt-1">Sign in to access your dashboard</p>
+            </div>
+            <form id="login-form" onsubmit="event.preventDefault(); handleLogin();">
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Username</label>
+                    <input type="text" id="login-username" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all bg-slate-50 focus:bg-white" placeholder="Enter username" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Password</label>
+                    <input type="password" id="login-password" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all bg-slate-50 focus:bg-white" placeholder="Enter password" required>
+                </div>
+                <div id="login-error" class="hidden mb-4 p-3 rounded-lg bg-rose-50 text-rose-600 text-sm font-medium border border-rose-100 text-center"></div>
+                <button type="submit" id="login-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md shadow-indigo-600/20">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="flex h-screen w-full">
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden transition-opacity duration-300 opacity-0" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+            <!-- Brand -->
+            <div class="h-16 flex items-center px-6 border-b border-slate-800 shrink-0">
+                <div class="flex items-center gap-2 text-white">
+                    <div class="bg-indigo-500 p-1.5 rounded-lg">
+                        <i class="fa-solid fa-chart-line text-white"></i>
+                    </div>
+                    <span class="text-lg font-bold tracking-wide">Monitoring M&E System</span>
+                </div>
+                <!-- Close mobile sidebar button -->
+                <button class="ml-auto lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-hide">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-2">Navigation</p>
+                
+                <button onclick="switchTab('home')" id="nav-home" class="nav-btn active-nav w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium bg-indigo-600/20 text-indigo-400">
+                    <i class="fa-solid fa-house w-5 text-center text-indigo-400 nav-icon"></i> Home
+                </button>
+                
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-table-columns w-5 text-center text-slate-400 nav-icon"></i> Dashboard
+                </button>
+                
+                <button onclick="switchTab('program')" id="nav-program" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-folder-open w-5 text-center text-slate-400 nav-icon"></i> Program
+                </button>
+                
+                <button onclick="switchTab('project')" id="nav-project" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-briefcase w-5 text-center text-slate-400 nav-icon"></i> Project
+                </button>
+                
+                <button onclick="switchTab('indicator')" id="nav-indicator" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-bullseye w-5 text-center text-slate-400 nav-icon"></i> Indicator
+                </button>
+                
+                <button onclick="switchTab('monitoring')" id="nav-monitoring" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-heart-pulse w-5 text-center text-slate-400 nav-icon"></i> Monitoring Tool
+                </button>
+                
+                <button onclick="switchTab('survey')" id="nav-survey" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-file-pen w-5 text-center text-slate-400 nav-icon"></i> Survey Builder
+                </button>
+                
+                <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium hover:bg-slate-800 hover:text-white">
+                    <i class="fa-solid fa-gear w-5 text-center text-slate-400 nav-icon"></i> Admin
+                </button>
+            </nav>
+
+            <!-- User Profile (Sidebar Bottom) -->
+            <div class="p-4 border-t border-slate-800 shrink-0">
+                <div class="flex items-center gap-3 px-3 py-2">
+                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+                        <i class="fa-solid fa-user text-sm text-slate-300"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">Jane Doe</p>
+                        <p class="text-xs text-slate-500 truncate">M&E Officer</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            
+            <!-- Topbar Header -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-10 shrink-0">
+                <div class="flex items-center gap-4">
+                    <!-- Hamburger menu for mobile -->
+                    <button class="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-md transition-colors" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    
+                    <!-- Search Bar (hidden on small screens) -->
+                    <div class="hidden md:flex items-center bg-slate-100 px-3 py-1.5 rounded-lg border border-transparent focus-within:border-indigo-300 focus-within:bg-white transition-all w-64 lg:w-96">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 text-sm"></i>
+                        <input type="text" placeholder="Search projects, indicators..." class="bg-transparent border-none outline-none text-sm ml-2 w-full text-slate-700 placeholder:text-slate-400">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <button class="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                        <i class="fa-regular fa-bell text-xl"></i>
+                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
+                    </button>
+                    <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 lg:hidden">
+                        <i class="fa-solid fa-user text-indigo-600 text-sm"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Scrollable Content View -->
+            <div class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8">
+                <div class="max-w-7xl mx-auto h-full relative">
+
+                    <!-- HOME VIEW (System Building) -->
+                    <div id="view-home" class="view-section fade-in space-y-8 block">
+                        <div>
+                            <h2 class="text-3xl font-bold text-slate-800 tracking-tight">Monitoring M&E System</h2>
+                            <p class="text-slate-500 mt-2 text-lg">Central hub for tracking data sources and system architecture.</p>
+                        </div>
+
+                        <!-- System Architecture Diagram / Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch relative">
+                            
+                            <!-- Connecting lines (visible on lg screens) -->
+                            <div class="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-indigo-200 via-indigo-400 to-emerald-400 -z-10 rounded-full"></div>
+
+                            <!-- Pillar 1: Data Sources -->
+                            <div class="bg-white border-2 border-indigo-100 rounded-2xl p-6 shadow-xl shadow-indigo-100/50 flex flex-col hover:border-indigo-300 transition-colors">
+                                <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-2xl mb-4 shadow-inner">
+                                    <i class="fa-solid fa-database"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800 mb-2">Data Sources</h3>
+                                <p class="text-slate-500 text-sm flex-1 mb-6">Ingestion points for field surveys, partner API integrations, and direct data entry.</p>
+                                
+                                <div class="space-y-3 mt-auto">
+                                    <div class="flex items-center gap-3 text-sm bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                        <i class="fa-solid fa-mobile-screen text-indigo-500 w-4 text-center"></i>
+                                        <span class="text-slate-700 font-medium">Mobile Data Collection</span>
+                                        <span class="ml-auto text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">Active</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-sm bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                        <i class="fa-solid fa-file-excel text-indigo-500 w-4 text-center"></i>
+                                        <span class="text-slate-700 font-medium">Excel Bulk Uploads</span>
+                                        <span class="ml-auto text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">Active</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-sm bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                        <i class="fa-solid fa-globe text-slate-400 w-4 text-center"></i>
+                                        <span class="text-slate-500 font-medium">Partner API Gateway</span>
+                                        <span class="ml-auto text-xs font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">Offline</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pillar 2: Core Processing -->
+                            <div class="bg-indigo-600 border-2 border-indigo-700 rounded-2xl p-6 shadow-xl shadow-indigo-600/30 flex flex-col text-white transform md:-translate-y-4">
+                                <div class="w-14 h-14 bg-indigo-500/50 border border-indigo-400/50 rounded-xl flex items-center justify-center text-2xl mb-4 shadow-inner">
+                                    <i class="fa-solid fa-server text-indigo-50"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2">M&E Core Engine</h3>
+                                <p class="text-indigo-100 text-sm flex-1 mb-6">Centralized data validation, indicator aggregation, and logic processing warehouse.</p>
+                                
+                                <div class="space-y-4 mt-auto bg-indigo-700/50 p-4 rounded-xl border border-indigo-500/30">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-indigo-100">Data Integrity</span>
+                                        <span class="text-sm font-bold text-emerald-400">99.8%</span>
+                                    </div>
+                                    <div class="w-full bg-indigo-900/50 rounded-full h-1.5">
+                                        <div class="bg-emerald-400 h-1.5 rounded-full" style="width: 99.8%"></div>
+                                    </div>
+                                    
+                                    <div class="flex justify-between items-center pt-2">
+                                        <span class="text-sm text-indigo-100">Indicators Calculated</span>
+                                        <span class="text-sm font-bold text-white">1,402</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-indigo-100">Storage Capacity</span>
+                                        <span class="text-sm font-bold text-white">45%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pillar 3: Outputs -->
+                            <div class="bg-white border-2 border-emerald-100 rounded-2xl p-6 shadow-xl shadow-emerald-100/50 flex flex-col hover:border-emerald-300 transition-colors">
+                                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-2xl mb-4 shadow-inner">
+                                    <i class="fa-solid fa-chart-pie"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800 mb-2">Analytics & Outputs</h3>
+                                <p class="text-slate-500 text-sm flex-1 mb-6">Real-time dashboards, scheduled reports, and spatial mapping for stakeholders.</p>
+                                
+                                <div class="space-y-3 mt-auto">
+                                    <div class="flex items-center gap-3 text-sm bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                        <i class="fa-solid fa-table-columns text-emerald-500 w-4 text-center"></i>
+                                        <span class="text-slate-700 font-medium">Interactive Dashboards</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-sm bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                        <i class="fa-solid fa-map-location-dot text-emerald-500 w-4 text-center"></i>
+                                        <span class="text-slate-700 font-medium">GIS Mapping</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-sm bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                        <i class="fa-solid fa-file-pdf text-emerald-500 w-4 text-center"></i>
+                                        <span class="text-slate-700 font-medium">Automated Reporting</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Source Quick Actions -->
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-8">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4">Manage Data Sources</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <button class="flex flex-col items-center justify-center p-4 border border-dashed border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 hover:border-indigo-400 hover:text-indigo-600 transition-all group">
+                                    <i class="fa-solid fa-plus text-2xl mb-2 text-slate-400 group-hover:text-indigo-500"></i>
+                                    <span class="text-sm font-medium">Add Database</span>
+                                </button>
+                                <button class="flex flex-col items-center justify-center p-4 border border-slate-200 rounded-xl text-slate-700 bg-slate-50 hover:bg-white hover:border-indigo-300 transition-all">
+                                    <i class="fa-brands fa-aws text-2xl mb-2 text-[#FF9900]"></i>
+                                    <span class="text-sm font-medium">AWS S3 Bucket</span>
+                                </button>
+                                <button class="flex flex-col items-center justify-center p-4 border border-slate-200 rounded-xl text-slate-700 bg-slate-50 hover:bg-white hover:border-indigo-300 transition-all">
+                                    <i class="fa-solid fa-leaf text-2xl mb-2 text-[#47A248]"></i>
+                                    <span class="text-sm font-medium">MongoDB Cluster</span>
+                                </button>
+                                <button class="flex flex-col items-center justify-center p-4 border border-slate-200 rounded-xl text-slate-700 bg-slate-50 hover:bg-white hover:border-indigo-300 transition-all">
+                                    <i class="fa-solid fa-server text-2xl mb-2 text-blue-600"></i>
+                                    <span class="text-sm font-medium">PostgreSQL</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- DASHBOARD VIEW -->
+                    <div id="view-dashboard" class="view-section fade-in space-y-6 hidden">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">System Dashboard</h2>
+                            <p class="text-slate-500 text-sm mt-1">Overview of M&E metrics and project performance.</p>
+                        </div>
+
+                        <!-- Metric Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <!-- Card 1 -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center space-x-4">
+                                <div class="p-3 rounded-lg bg-blue-100 text-blue-600">
+                                    <i class="fa-solid fa-briefcase text-xl w-6 text-center"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500">Total Active Projects</p>
+                                    <h3 class="text-2xl font-bold text-slate-800">24</h3>
+                                </div>
+                            </div>
+                            <!-- Card 2 -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center space-x-4">
+                                <div class="p-3 rounded-lg bg-emerald-100 text-emerald-600">
+                                    <i class="fa-solid fa-bullseye text-xl w-6 text-center"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500">Key Indicators Met</p>
+                                    <h3 class="text-2xl font-bold text-slate-800">86%</h3>
+                                </div>
+                            </div>
+                            <!-- Card 3 -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center space-x-4">
+                                <div class="p-3 rounded-lg bg-indigo-100 text-indigo-600">
+                                    <i class="fa-solid fa-users text-xl w-6 text-center"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500">Total Beneficiaries</p>
+                                    <h3 class="text-2xl font-bold text-slate-800">12.4k</h3>
+                                </div>
+                            </div>
+                            <!-- Card 4 -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center space-x-4">
+                                <div class="p-3 rounded-lg bg-amber-100 text-amber-600">
+                                    <i class="fa-solid fa-circle-exclamation text-xl w-6 text-center"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500">Pending Surveys</p>
+                                    <h3 class="text-2xl font-bold text-slate-800">8</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charts Section -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Bar Chart Container -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-lg font-semibold text-slate-800">Targets vs. Achieved</h3>
+                                    <select class="text-sm border-slate-200 rounded-md text-slate-600 bg-slate-50 px-2 py-1 outline-none border focus:border-indigo-300 cursor-pointer">
+                                        <option>Last 6 Months</option>
+                                        <option>This Year</option>
+                                    </select>
+                                </div>
+                                <div class="relative h-72 w-full">
+                                    <canvas id="barChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Line Chart Container -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-lg font-semibold text-slate-800">Survey Data Collection</h3>
+                                    <button class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">View Report</button>
+                                </div>
+                                <div class="relative h-72 w-full">
+                                    <canvas id="lineChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity Table -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+                                <h3 class="text-lg font-semibold text-slate-800">Recent Monitoring Activities</h3>
+                                <button class="text-sm text-slate-500 hover:text-indigo-600 transition-colors">See all</button>
+                            </div>
+                            <div class="overflow-x-auto w-full">
+                                <table class="w-full text-left text-sm text-slate-600 whitespace-nowrap">
+                                    <thead class="bg-slate-50 text-slate-500 font-medium">
+                                        <tr>
+                                            <th class="px-6 py-4">Project Name</th>
+                                            <th class="px-6 py-4">Activity Type</th>
+                                            <th class="px-6 py-4">Date</th>
+                                            <th class="px-6 py-4">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <td class="px-6 py-4 font-medium text-slate-800">Education Outreach 2026</td>
+                                            <td class="px-6 py-4">Field Survey</td>
+                                            <td class="px-6 py-4">Oct 02, 2026</td>
+                                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium text-emerald-700 bg-emerald-100">Completed</span></td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <td class="px-6 py-4 font-medium text-slate-800">Clean Water Initiative</td>
+                                            <td class="px-6 py-4">Indicator Update</td>
+                                            <td class="px-6 py-4">Oct 01, 2026</td>
+                                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium text-amber-700 bg-amber-100">Pending Review</span></td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <td class="px-6 py-4 font-medium text-slate-800">Healthcare Access</td>
+                                            <td class="px-6 py-4">Baseline Assessment</td>
+                                            <td class="px-6 py-4">Sep 28, 2026</td>
+                                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium text-blue-700 bg-blue-100">In Progress</span></td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <td class="px-6 py-4 font-medium text-slate-800">Women Empowerment</td>
+                                            <td class="px-6 py-4">Mid-term Eval</td>
+                                            <td class="px-6 py-4">Sep 25, 2026</td>
+                                            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium text-emerald-700 bg-emerald-100">Completed</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SURVEY BUILDER VIEW -->
+                    <div id="view-survey" class="view-section fade-in h-full hidden -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 -mb-4 sm:-mb-6 lg:-mb-8">
+                        <iframe src="http://localhost:3000" class="w-full h-full border-none min-h-[calc(100vh-64px)]"></iframe>
+                    </div>
+
+                    <!-- ADMIN VIEW -->
+                    <div id="view-admin" class="view-section fade-in h-full hidden -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 -mb-4 sm:-mb-6 lg:-mb-8 bg-white flex min-h-[calc(100vh-64px)]">
+                        <!-- Admin Sidebar -->
+                        <div class="w-64 border-r border-slate-200 bg-slate-50 flex flex-col">
+                            <div class="p-6 border-b border-slate-200">
+                                <h2 class="text-xl font-bold text-slate-800">Admin Panel</h2>
+                                <p class="text-sm text-slate-500">System settings</p>
+                            </div>
+                            <nav class="flex-1 overflow-y-auto p-4 space-y-2">
+                                <button onclick="switchAdminTab('users')" id="admin-nav-users" class="admin-nav-btn active-admin-nav w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-sm font-medium bg-indigo-50 text-indigo-700">
+                                    <i class="fa-solid fa-users w-5"></i> User Management
+                                </button>
+                                <button onclick="switchAdminTab('roles')" id="admin-nav-roles" class="admin-nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                                    <i class="fa-solid fa-user-shield w-5"></i> Assign Roles
+                                </button>
+                                <button onclick="switchAdminTab('locations')" id="admin-nav-locations" class="admin-nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                                    <i class="fa-solid fa-location-dot w-5"></i> Assign Location
+                                </button>
+                            </nav>
+                        </div>
+                        
+                        <!-- Admin Content Area -->
+                        <div class="flex-1 overflow-y-auto p-8 bg-white">
+                            <!-- Users Tab -->
+                            <div id="admin-tab-users" class="admin-tab-content block">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-2xl font-bold text-slate-800">User Management</h3>
+                                    <button onclick="openUserModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+                                        <i class="fa-solid fa-plus mr-2"></i> Add User
+                                    </button>
+                                </div>
+                                <!-- Users Table -->
+                                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                                    <table class="w-full text-left text-sm whitespace-nowrap">
+                                        <thead class="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
+                                            <tr>
+                                                <th class="px-6 py-4">Name</th>
+                                                <th class="px-6 py-4">Email</th>
+                                                <th class="px-6 py-4">Role</th><th class="px-6 py-4">Permissions</th>
+                                                <th class="px-6 py-4">Status</th>
+                                                <th class="px-6 py-4 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="users-table-body" class="divide-y divide-slate-100 text-slate-600">
+                                            <!-- JS populated -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Roles Tab -->
+                            <div id="admin-tab-roles" class="admin-tab-content hidden">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-2xl font-bold text-slate-800">Assign Roles</h3>
+                                    <button onclick="openRoleModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+                                        <i class="fa-solid fa-plus mr-2"></i> Create Role
+                                    </button>
+                                </div>
+                                <div id="roles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <!-- JS populated -->
+                                </div>
+                            </div>
+
+                            <!-- Locations Tab -->
+                            <div id="admin-tab-locations" class="admin-tab-content hidden">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-2xl font-bold text-slate-800">Assign Location</h3>
+                                </div>
+                                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                                        <!-- Province -->
+                                        <div>
+                                            <div class="flex justify-between items-center mb-2">
+                                                <label class="block text-sm font-medium text-slate-700">Province</label>
+                                                <button onclick="openLocationModal('province')" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"><i class="fa-solid fa-plus"></i> New</button>
+                                            </div>
+                                            <select id="select-province" onchange="onProvinceChange(this.value)" class="w-full border-slate-300 rounded-md shadow-sm border p-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white">
+                                                <option value="">Select Province...</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- District -->
+                                        <div>
+                                            <div class="flex justify-between items-center mb-2">
+                                                <label class="block text-sm font-medium text-slate-700">District</label>
+                                                <button onclick="openLocationModal('district')" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"><i class="fa-solid fa-plus"></i> New</button>
+                                            </div>
+                                            <select id="select-district" onchange="onDistrictChange(this.value)" class="w-full border-slate-300 rounded-md shadow-sm border p-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white" disabled>
+                                                <option value="">Select District...</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Commune -->
+                                        <div>
+                                            <div class="flex justify-between items-center mb-2">
+                                                <label class="block text-sm font-medium text-slate-700">Commune</label>
+                                                <button onclick="openLocationModal('commune')" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"><i class="fa-solid fa-plus"></i> New</button>
+                                            </div>
+                                            <select id="select-commune" onchange="onCommuneChange(this.value)" class="w-full border-slate-300 rounded-md shadow-sm border p-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white" disabled>
+                                                <option value="">Select Commune...</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Village -->
+                                        <div>
+                                            <div class="flex justify-between items-center mb-2">
+                                                <label class="block text-sm font-medium text-slate-700">Village</label>
+                                                <button onclick="openLocationModal('village')" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"><i class="fa-solid fa-plus"></i> New</button>
+                                            </div>
+                                            <select id="select-village" class="w-full border-slate-300 rounded-md shadow-sm border p-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white" disabled>
+                                                <option value="">Select Village...</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PLACEHOLDER VIEW (For other tabs) -->
+                    <div id="view-placeholder" class="view-section fade-in h-full flex flex-col items-center justify-center text-center hidden min-h-[60vh]">
+                        <div class="bg-slate-200 p-6 rounded-full mb-6 text-slate-400 inline-flex items-center justify-center">
+                            <i id="placeholder-icon" class="fa-solid fa-gear text-5xl"></i>
+                        </div>
+                        <h2 id="placeholder-title" class="text-2xl font-bold text-slate-800 mb-2">Module Name</h2>
+                        <p class="text-slate-500 max-w-md">
+                            This is a placeholder view for the selected section. In a fully implemented M&E system, this area would contain specific lists, forms, and tools related to this management module.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Module configuration for tab switching
+        const menuConfig = {
+            'home': { title: 'Home', icon: 'fa-house' },
+            'dashboard': { title: 'Dashboard', icon: 'fa-table-columns' },
+            'program': { title: 'Program', icon: 'fa-folder-open' },
+            'project': { title: 'Project', icon: 'fa-briefcase' },
+            'indicator': { title: 'Indicator', icon: 'fa-bullseye' },
+            'monitoring': { title: 'Monitoring Tool', icon: 'fa-heart-pulse' },
+            'survey': { title: 'Survey Builder', icon: 'fa-file-pen' },
+            'admin': { title: 'Admin', icon: 'fa-gear' }
+        };
+
+        // --- Sidebar Logic ---
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        let isSidebarOpen = false;
+
+        function toggleSidebar() {
+            isSidebarOpen = !isSidebarOpen;
+            if (isSidebarOpen) {
+                // Open
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                // Close
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300); // match transition duration
+            }
+        }
+
+        // --- Tab Switching Logic ---
+        function switchTab(tabId) {
+            // 1. Reset all nav buttons styling
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600/20', 'text-indigo-400');
+                btn.classList.add('hover:bg-slate-800', 'hover:text-white');
+                const icon = btn.querySelector('.nav-icon');
+                icon.classList.remove('text-indigo-400');
+                icon.classList.add('text-slate-400');
+            });
+
+            // 2. Apply active styling to clicked tab
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            activeBtn.classList.remove('hover:bg-slate-800', 'hover:text-white');
+            activeBtn.classList.add('bg-indigo-600/20', 'text-indigo-400');
+            activeBtn.querySelector('.nav-icon').classList.remove('text-slate-400');
+            activeBtn.querySelector('.nav-icon').classList.add('text-indigo-400');
+
+            // 3. Toggle content views
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+
+            if (tabId === 'home') {
+                document.getElementById('view-home').classList.remove('hidden');
+            } else if (tabId === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+            } else if (tabId === 'survey') {
+                document.getElementById('view-survey').classList.remove('hidden');
+            } else if (tabId === 'admin') {
+                document.getElementById('view-admin').classList.remove('hidden');
+            } else {
+                // Show generic placeholder and update text/icon
+                const placeholder = document.getElementById('view-placeholder');
+                placeholder.classList.remove('hidden');
+                
+                document.getElementById('placeholder-title').innerText = `${menuConfig[tabId].title} Module`;
+                const iconEl = document.getElementById('placeholder-icon');
+                // clear all classes and add base + specific icon
+                iconEl.className = `fa-solid ${menuConfig[tabId].icon} text-5xl`;
+            }
+
+            // Close sidebar on mobile after selection
+            if (window.innerWidth < 1024 && isSidebarOpen) {
+                toggleSidebar();
+            }
+        }
+
+        // --- Admin Tab Switching Logic ---
+        function switchAdminTab(tabId) {
+            // 1. Reset all admin nav buttons styling
+            document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-50', 'text-indigo-700');
+                btn.classList.add('text-slate-600', 'hover:bg-slate-100', 'hover:text-slate-900');
+            });
+
+            // 2. Apply active styling to clicked admin tab
+            const activeBtn = document.getElementById(`admin-nav-${tabId}`);
+            activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100', 'hover:text-slate-900');
+            activeBtn.classList.add('bg-indigo-50', 'text-indigo-700');
+
+            // 3. Toggle content views
+            document.querySelectorAll('.admin-tab-content').forEach(el => {
+                el.classList.remove('block');
+                el.classList.add('hidden');
+            });
+
+            document.getElementById(`admin-tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`admin-tab-${tabId}`).classList.add('block');
+        }
+
+        // --- Chart.js Initialization ---
+        window.onload = function() {
+            // Bar Chart (Targets vs Achieved)
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [
+                        {
+                            label: 'Target',
+                            data: [100, 120, 150, 140, 180, 200],
+                            backgroundColor: '#94a3b8',
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: 'Achieved',
+                            data: [85, 110, 140, 135, 175, 190],
+                            backgroundColor: '#4f46e5',
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter' } } },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleFont: { family: 'Inter' }, bodyFont: { family: 'Inter' } }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { family: 'Inter' } } },
+                        y: { border: { display: false }, grid: { color: '#e2e8f0', borderDash: [3, 3] }, ticks: { color: '#64748b', font: { family: 'Inter' } } }
+                    }
+                }
+            });
+
+            // Line Chart (Survey Data Collection)
+            const ctxLine = document.getElementById('lineChart').getContext('2d');
+            new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'],
+                    datasets: [{
+                        label: 'Responses',
+                        data: [45, 72, 105, 88, 120],
+                        borderColor: '#10b981',
+                        backgroundColor: '#10b981',
+                        borderWidth: 3,
+                        tension: 0.4, // Smooth curve
+                        pointRadius: 4,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#10b981',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleFont: { family: 'Inter' }, bodyFont: { family: 'Inter' } }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { family: 'Inter' } } },
+                        y: { border: { display: false }, grid: { color: '#e2e8f0', borderDash: [3, 3] }, ticks: { color: '#64748b', font: { family: 'Inter' }, beginAtZero: true } }
+                    }
+                }
+            });
+        };
+    </script>
+    <!-- User Modal -->
+    <div id="user-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="user-modal-title" class="text-lg font-bold text-slate-800">Add User</h3>
+                <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="user-id">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                    <input type="text" id="user-name" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                    <input type="email" id="user-email" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                    <select id="user-role" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <!-- Populated via JS -->
+                    </select>
+                </div>                  <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-1">Permissions</label>
+                      <div class="flex gap-4 text-sm">
+                          <label class="flex items-center"><input type="checkbox" id="perm-create" value="Create" class="mr-2"> Create</label>
+                          <label class="flex items-center"><input type="checkbox" id="perm-edit" value="Edit" class="mr-2"> Edit</label>
+                          <label class="flex items-center"><input type="checkbox" id="perm-delete" value="Delete" class="mr-2"> Delete</label>
+                          <label class="flex items-center"><input type="checkbox" id="perm-modify" value="Modify" class="mr-2"> Modify</label>
+                      </div>
+                  </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                    <select id="user-status" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-xl">
+                <button onclick="closeUserModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                <button onclick="saveUser()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Modal -->
+    <div id="role-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="role-modal-title" class="text-lg font-bold text-slate-800">Create Role</h3>
+                <button onclick="closeRoleModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="role-id">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Role Name</label>
+                    <input type="text" id="role-name" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <textarea id="role-desc" rows="3" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-xl">
+                <button onclick="closeRoleModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                <button onclick="saveRole()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Location Modal -->
+    <div id="location-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="location-modal-title" class="text-lg font-bold text-slate-800">Add Location</h3>
+                <button onclick="closeLocationModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="location-type">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                    <input type="text" id="location-name" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-xl">
+                <button onclick="closeLocationModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                <button onclick="saveLocation()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="admin_logic.js"></script>
+    <!-- Assign Users to Role Modal -->
+    <div id="assign-role-modal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-xl">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-lg" id="assign-role-title">Assign Users</h3>
+                <button onclick="closeAssignRoleModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="assign-role-id">
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Select Users to Assign to this Role:</label>
+                    <div id="assign-users-list" class="space-y-2 max-h-64 overflow-y-auto border border-slate-200 rounded-lg p-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button onclick="closeAssignRoleModal()" class="px-4 py-2 rounded-lg text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
+                    <button onclick="saveRoleUsers()" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">Save Assignments</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+

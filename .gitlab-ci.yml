@@ -1,0 +1,68 @@
+image: node:20
+
+stages:
+  - build
+  - test
+  - deploy
+
+cache:
+  paths:
+    - survey-builder/node_modules/
+    - m_e_backend/vendor/
+
+# --- FRONTEND BUILD ---
+build_frontend:
+  stage: build
+  script:
+    - cd survey-builder
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - survey-builder/.next/
+      - survey-builder/out/
+  only:
+    - main
+
+# --- BACKEND TEST ---
+test_backend:
+  image: php:8.2-cli
+  stage: test
+  before_script:
+    - apt-get update -y && apt-get install -y libpq-dev unzip git
+    - docker-php-ext-install pdo pdo_pgsql
+    - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    - php composer-setup.php
+    - php -r "unlink('composer-setup.php');"
+    - mv composer.phar /usr/local/bin/composer
+  script:
+    - cd m_e_backend
+    - composer install --no-progress --prefer-dist
+    - cp .env.example .env
+    - php artisan key:generate
+    # Uncomment to run PHPUnit tests if you have them configured:
+    # - php artisan test
+  only:
+    - main
+
+# --- DEPLOY TO PRODUCTION ---
+deploy_production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache rsync openssh
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $PRODUCTION_SERVER_IP >> ~/.ssh/known_hosts
+  script:
+    - echo "Deploying Frontend and Backend to Production..."
+    # Example deployment command using rsync:
+    # - rsync -avz --exclude='.git' ./ $PRODUCTION_SSH_USER@$PRODUCTION_SERVER_IP:/var/www/m_e_system/
+    
+    # Run Laravel migrations on production server:
+    # - ssh $PRODUCTION_SSH_USER@$PRODUCTION_SERVER_IP "cd /var/www/m_e_system/m_e_backend && php artisan migrate --force"
+  only:
+    - main
+  environment:
+    name: production
