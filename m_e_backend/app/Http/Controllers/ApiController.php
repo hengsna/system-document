@@ -14,6 +14,20 @@ use Illuminate\Support\Facades\Hash;
 class ApiController extends Controller
 {
     // --- AUTH ---
+    public function setupAdmin() {
+        $user = User::where('name', 'admin')->first();
+        if (!$user) {
+            $user = new User();
+        }
+        $user->name = 'admin';
+        $user->email = 'admin@example.com';
+        $user->password = Hash::make('admin123@');
+        $user->status = 'Active';
+        $user->permissions = json_encode(['create', 'edit', 'delete', 'modify']);
+        $user->save();
+        return response()->json(['success' => true, 'message' => 'Admin user created or updated!']);
+    }
+
     public function login(Request $request) {
         $user = User::where('name', $request->username)->first();
         if ($user && Hash::check($request->password, $user->password)) {
