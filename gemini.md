@@ -2,44 +2,27 @@
 
 ## 1. Project Overview
 - **Project Name:** M_and_E_System
-- **Frontend Framework:** Next.js + Vanilla JS Dashboard
-- **Backend Framework:** Laravel (PHP 8.2)
-- **Database:** PostgreSQL
+- **Frontend & Backend:** Next.js (App Router API Routes) + Vanilla JS Dashboard
+- **Database:** MongoDB Atlas (`M_E_System` database)
 - **GitHub Repository:** `https://github.com/hengsna/system-document.git`
+- **Important Note:** The Laravel backend (`m_e_backend`) has been completely abandoned. All database logic was successfully ported to Next.js API Routes (`survey-builder/app/api`).
 
-## 2. Server & Deployment Configuration
-
-### Frontend (Vercel)
-- **Hosting Platform:** Vercel (Free)
+## 2. Local Development Configuration
 - **Root Directory:** `survey-builder`
-- **Framework Preset:** Next.js
-- **Links:** 
-  - Survey Builder: `/`
-  - Admin Dashboard: `/dashboard.html`
-
-### Backend (Render)
-- **Hosting Platform:** Render.com (Web Service - Free Tier)
-- **Root Directory:** `m_e_backend`
-- **Environment:** PHP
-- **Build Command:** `composer install && php artisan migrate --force`
-- **Start Command:** `php artisan serve --host=0.0.0.0 --port=$PORT`
-
-### Database (Render PostgreSQL)
-- **Host:** `dpg-db16p46gekts73cfn700-a.ohio-postgres.render.com`
-- **Database Name:** `m_and_e_system_db`
-- **Username:** `m_and_e_system_db_user`
-- **Password:** `uiBJwCfQvxLO7vPQOWgWQOF2R763HyMd`
-- *Note: These credentials have already been hardcoded into `m_e_backend/.env.example` and pushed to GitHub.*
+- **Start Command:** `npm run dev` (run inside `survey-builder`)
+- **Dashboard URL:** `http://localhost:3000/dashboard.html`
+- **Database Connection:** Stored in `survey-builder/.env.local` using `MONGODB_URI`.
 
 ## 3. Administrator Credentials
-When logging into the system, use the following super-admin credentials:
-- **Username:** `chveasna`
-- **Password:** `admin123$`
+When logging into the system on the dashboard, use the following super-admin credentials:
+- **Username:** `admin`
+- **Password:** `admin123@`
 
-## 4. Pending Tasks for Future Sessions
-To fully complete the system linkage in the next session, the following steps must be taken:
-1. Finish deploying the Laravel backend on Render.
-2. Copy the final live Render URL (e.g., `https://m-and-e-backend.onrender.com`).
-3. Open `survey-builder/public/admin_logic.js`.
-4. Change the first line from `const API_BASE = 'http://127.0.0.1:8000/api';` to the new live Render URL.
-5. Commit and push the code to GitHub so Vercel updates the frontend to talk to the live backend.
+## 4. Work Accomplished Today
+- Successfully ported all Laravel API routes (`/api/login`, `/api/users`, `/api/roles`, `/api/locations`) to Next.js API routes.
+- Wrote a Node script to bypass UI setup and directly inject the `admin` user into the MongoDB database.
+- Upgraded the Survey Builder (`Toolbar.tsx`) with **Save Draft** and **Deploy Survey** buttons connected to a new `/api/surveys` route to write directly to MongoDB.
+
+## 5. Pending Tasks for Future Sessions
+- Continue building out specific module logic in the Dashboard UI.
+- Allow regular users to fetch and submit "Deployed" surveys.
