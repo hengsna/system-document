@@ -33,9 +33,18 @@ const VillageSchema = new mongoose.Schema({
   commune_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Commune' }
 });
 
+const SurveySchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  form_id: { type: String, required: true, unique: true },
+  schema: { type: Object, required: true },
+  status: { type: String, default: 'Draft' }, // Draft, Deployed
+  created_at: { type: Date, default: Date.now }
+});
+
 export const User = mongoose.models.User || mongoose.model('User', UserSchema);
 export const Role = mongoose.models.Role || mongoose.model('Role', RoleSchema);
 export const Province = mongoose.models.Province || mongoose.model('Province', ProvinceSchema);
 export const District = mongoose.models.District || mongoose.model('District', DistrictSchema);
 export const Commune = mongoose.models.Commune || mongoose.model('Commune', CommuneSchema);
 export const Village = mongoose.models.Village || mongoose.model('Village', VillageSchema);
+export const Survey = mongoose.models.Survey || mongoose.model('Survey', SurveySchema);

@@ -32,6 +32,24 @@ export function Toolbar() {
     { type: 'calculate', label: 'Calculate', icon: Calculator },
   ];
 
+  const handleDeploy = async (status: 'Draft' | 'Deployed') => {
+    try {
+      const res = await fetch('/api/surveys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schema, status })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`Survey ${status === 'Deployed' ? 'deployed' : 'saved'} successfully!`);
+      } else {
+        alert(`Error: ${data.message}`);
+      }
+    } catch (e) {
+      alert('Failed to connect to database');
+    }
+  };
+
   return (
     <div className="w-64 bg-white border-r h-screen overflow-y-auto flex flex-col">
       <div className="p-4 border-b">
@@ -49,7 +67,21 @@ export function Toolbar() {
           </button>
         ))}
       </div>
-      <div className="p-4 border-t">
+      <div className="p-4 border-t space-y-2">
+        <button
+          onClick={() => handleDeploy('Draft')}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 text-white rounded hover:bg-slate-900 transition-colors font-medium text-sm"
+        >
+          <FileText size={16} />
+          Save Draft
+        </button>
+        <button
+          onClick={() => handleDeploy('Deployed')}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium text-sm"
+        >
+          <Download size={16} />
+          Deploy Survey
+        </button>
         <button
           onClick={() => exportToXlsForm(schema)}
           className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors font-medium text-sm"
