@@ -1,5 +1,6 @@
 // API URL
-const API_BASE = 'https://m-and-e-backend.onrender.com/api';
+// const API_BASE = 'https://m-and-e-backend.onrender.com/api';
+const API_BASE = '/api';
 
 // State
 let users = [];

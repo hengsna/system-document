@@ -1,0 +1,41 @@
+import mongoose from 'mongoose';
+
+const UserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  password: { type: String, required: true },
+  role_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
+  status: { type: String, default: 'Active' },
+  permissions: { type: String, default: '[]' }
+});
+
+const RoleSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String }
+});
+
+const ProvinceSchema = new mongoose.Schema({
+  name: { type: String, required: true }
+});
+
+const DistrictSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  province_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Province' }
+});
+
+const CommuneSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  district_id: { type: mongoose.Schema.Types.ObjectId, ref: 'District' }
+});
+
+const VillageSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  commune_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Commune' }
+});
+
+export const User = mongoose.models.User || mongoose.model('User', UserSchema);
+export const Role = mongoose.models.Role || mongoose.model('Role', RoleSchema);
+export const Province = mongoose.models.Province || mongoose.model('Province', ProvinceSchema);
+export const District = mongoose.models.District || mongoose.model('District', DistrictSchema);
+export const Commune = mongoose.models.Commune || mongoose.model('Commune', CommuneSchema);
+export const Village = mongoose.models.Village || mongoose.model('Village', VillageSchema);
