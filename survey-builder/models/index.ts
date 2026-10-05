@@ -41,6 +41,21 @@ const SurveySchema = new mongoose.Schema({
   created_at: { type: Date, default: Date.now }
 });
 
+const ProgramSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String }
+});
+
+const IndicatorSchema = new mongoose.Schema({
+  program_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Program' },
+  indicator: { type: String, required: true },
+  baseline: { type: String },
+  target: { type: String },
+  data_source: { type: String },
+  frequency: { type: String },
+  responsible_role_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' }
+});
+
 export const User = mongoose.models.User || mongoose.model('User', UserSchema);
 export const Role = mongoose.models.Role || mongoose.model('Role', RoleSchema);
 export const Province = mongoose.models.Province || mongoose.model('Province', ProvinceSchema);
@@ -48,3 +63,5 @@ export const District = mongoose.models.District || mongoose.model('District', D
 export const Commune = mongoose.models.Commune || mongoose.model('Commune', CommuneSchema);
 export const Village = mongoose.models.Village || mongoose.model('Village', VillageSchema);
 export const Survey = mongoose.models.Survey || mongoose.model('Survey', SurveySchema);
+export const Program = mongoose.models.Program || mongoose.model('Program', ProgramSchema);
+export const Indicator = mongoose.models.Indicator || mongoose.model('Indicator', IndicatorSchema);

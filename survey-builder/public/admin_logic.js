@@ -438,3 +438,156 @@ async function handleLogin() {
         btn.disabled = false;
     }
 }
+
+// ---------------- INDICATOR MODULE ----------------
+let indicators = [];
+let programs = [];
+
+async function fetchPrograms() {
+    try {
+        const res = await fetch(API_BASE + '/programs');
+        programs = await res.json();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function fetchIndicators() {
+    try {
+        const res = await fetch(API_BASE + '/indicators');
+        indicators = await res.json();
+        renderIndicators();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function renderIndicators() {
+    const tbody = document.getElementById('indicators-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    if (indicators.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-slate-500">No indicators found. Create one!</td></tr>';
+        return;
+    }
+    
+    indicators.forEach(ind => {
+        tbody.innerHTML += `
+            <tr class="hover:bg-slate-50/50 transition-colors group">
+                <td class="px-6 py-4 font-medium text-slate-800">${ind.program_name || 'N/A'}</td>
+                <td class="px-6 py-4">${ind.indicator}</td>
+                <td class="px-6 py-4">${ind.baseline || '-'}</td>
+                <td class="px-6 py-4">${ind.target || '-'}</td>
+                <td class="px-6 py-4">${ind.data_source || '-'}</td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700">
+                        ${ind.frequency || '-'}
+                    </span>
+                </td>
+                <td class="px-6 py-4">${ind.role_name || 'Unassigned'}</td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="editIndicator('${ind._id}')" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteIndicator('${ind._id}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function openIndicatorModal() {
+    document.getElementById('indicator-id').value = '';
+    document.getElementById('indicator-name').value = '';
+    document.getElementById('indicator-baseline').value = '';
+    document.getElementById('indicator-target').value = '';
+    document.getElementById('indicator-source').value = '';
+    document.getElementById('indicator-frequency').value = 'Monthly';
+    
+    populateIndicatorDropdowns();
+    document.getElementById('indicator-modal-title').innerText = 'Add Indicator';
+    document.getElementById('indicator-modal').classList.remove('hidden');
+}
+
+function closeIndicatorModal() {
+    document.getElementById('indicator-modal').classList.add('hidden');
+}
+
+function populateIndicatorDropdowns() {
+    const progSelect = document.getElementById('indicator-program');
+    progSelect.innerHTML = '<option value="">Select Program...</option>';
+    programs.forEach(p => {
+        progSelect.innerHTML += `<option value="${p._id}">${p.name}</option>`;
+    });
+
+    const roleSelect = document.getElementById('indicator-role');
+    roleSelect.innerHTML = '<option value="">Select Role...</option>';
+    roles.forEach(r => {
+        roleSelect.innerHTML += `<option value="${r._id}">${r.name}</option>`;
+    });
+}
+
+async function saveIndicator() {
+    const id = document.getElementById('indicator-id').value;
+    const program_id = document.getElementById('indicator-program').value;
+    const indicator = document.getElementById('indicator-name').value;
+    const baseline = document.getElementById('indicator-baseline').value;
+    const target = document.getElementById('indicator-target').value;
+    const data_source = document.getElementById('indicator-source').value;
+    const frequency = document.getElementById('indicator-frequency').value;
+    const responsible_role_id = document.getElementById('indicator-role').value;
+
+    if (!indicator) return alert('Indicator name is required');
+
+    await fetch(API_BASE + '/indicators', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            id: id || undefined,
+            program_id: program_id || null,
+            indicator,
+            baseline,
+            target,
+            data_source,
+            frequency,
+            responsible_role_id: responsible_role_id || null
+        })
+    });
+    
+    closeIndicatorModal();
+    await fetchIndicators();
+}
+
+function editIndicator(id) {
+    const ind = indicators.find(i => i._id === id);
+    if (!ind) return;
+    
+    populateIndicatorDropdowns();
+    
+    document.getElementById('indicator-id').value = ind._id;
+    document.getElementById('indicator-program').value = ind.program_id || '';
+    document.getElementById('indicator-name').value = ind.indicator;
+    document.getElementById('indicator-baseline').value = ind.baseline || '';
+    document.getElementById('indicator-target').value = ind.target || '';
+    document.getElementById('indicator-source').value = ind.data_source || '';
+    document.getElementById('indicator-frequency').value = ind.frequency || 'Monthly';
+    document.getElementById('indicator-role').value = ind.responsible_role_id || '';
+    
+    document.getElementById('indicator-modal-title').innerText = 'Edit Indicator';
+    document.getElementById('indicator-modal').classList.remove('hidden');
+}
+
+async function deleteIndicator(id) {
+    if (!confirm('Delete this indicator?')) return;
+    await fetch(API_BASE + '/indicators/' + id, { method: 'DELETE' });
+    await fetchIndicators();
+}
+
+// Hook into initAdmin to fetch indicators and programs
+const originalInit = initAdmin;
+initAdmin = async function() {
+    await originalInit();
+    await fetchPrograms();
+    await fetchIndicators();
+}

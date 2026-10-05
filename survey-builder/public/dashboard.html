@@ -412,6 +412,34 @@
                         <iframe src="http://localhost:3000" class="w-full h-full border-none min-h-[calc(100vh-64px)]"></iframe>
                     </div>
 
+                    <!-- INDICATOR VIEW -->
+                    <div id="view-indicator" class="view-section fade-in h-full hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-slate-800">Indicator Management</h3>
+                            <button onclick="openIndicatorModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+                                <i class="fa-solid fa-plus mr-2"></i> Add Indicator
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto bg-white rounded-xl border border-slate-200">
+                            <table class="w-full text-left text-sm text-slate-600">
+                                <thead class="bg-slate-50 text-slate-700 font-medium border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-6 py-4">Program Area</th>
+                                        <th class="px-6 py-4">Indicator</th>
+                                        <th class="px-6 py-4">Baseline</th>
+                                        <th class="px-6 py-4">Target</th>
+                                        <th class="px-6 py-4">Data Source</th>
+                                        <th class="px-6 py-4">Frequency</th>
+                                        <th class="px-6 py-4">Responsible</th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="indicators-tbody" class="divide-y divide-slate-100">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- ADMIN VIEW -->
                     <div id="view-admin" class="view-section fade-in h-full hidden -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 -mb-4 sm:-mb-6 lg:-mb-8 bg-white flex min-h-[calc(100vh-64px)]">
                         <!-- Admin Sidebar -->
@@ -606,7 +634,7 @@
             } else if (tabId === 'dashboard') {
                 document.getElementById('view-dashboard').classList.remove('hidden');
             } else if (tabId === 'survey') {
-                document.getElementById('view-survey').classList.remove('hidden');
+                document.getElementById('view-survey').classList.remove('hidden'); } else if (tabId === 'indicator') { document.getElementById('view-indicator').classList.remove('hidden');
             } else if (tabId === 'admin') {
                 document.getElementById('view-admin').classList.remove('hidden');
             } else {
@@ -837,6 +865,58 @@
                     <button onclick="closeAssignRoleModal()" class="px-4 py-2 rounded-lg text-slate-600 font-medium hover:bg-slate-100">Cancel</button>
                     <button onclick="saveRoleUsers()" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">Save Assignments</button>
                 </div>
+            </div>
+        </div>
+    </div>
+    <!-- Indicator Modal -->
+    <div id="indicator-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="indicator-modal-title" class="text-lg font-bold text-slate-800">Add Indicator</h3>
+                <button onclick="closeIndicatorModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <input type="hidden" id="indicator-id">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Program Area</label>
+                    <select id="indicator-program" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Indicator</label>
+                    <input type="text" id="indicator-name" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Baseline</label>
+                        <input type="text" id="indicator-baseline" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Target</label>
+                        <input type="text" id="indicator-target" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Data Source</label>
+                    <input type="text" id="indicator-source" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Frequency</label>
+                    <select id="indicator-frequency" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Annually">Annually</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Responsible Role</label>
+                    <select id="indicator-role" class="w-full border-slate-300 rounded-md shadow-sm border p-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    </select>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-xl">
+                <button onclick="closeIndicatorModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                <button onclick="saveIndicator()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">Save</button>
             </div>
         </div>
     </div>
