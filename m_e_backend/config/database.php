@@ -114,6 +114,12 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'dsn' => env('DB_URI', 'mongodb+srv://user:pass@cluster.mongodb.net/M_E_System'),
+            'database' => env('DB_DATABASE', 'M_E_System'),
+        ],
+
     ],
 
     /*
